@@ -9,24 +9,49 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("orders")
-public class OrdersController {
-
+@RequestMapping("/api")
+public class ProductController {
     @Autowired
-    private IOrderService orderService;
+    private ProductRepository productRepository;
 
-    @GetMapping()
-    public ResponseEntity<List<Order>> getAllProducts() {
-        return ResponseEntity.ok(orderService.getAllOrders());
+    @PostMapping("/products")
+    public Product addProduct(@RequestBody Product product) {
+        return productRepository.save(product);
+    }
+}
+
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private ProductRepository productRepository;
+
+    @PostMapping
+    public Order createOrder(@RequestBody Order order) {
+        Product product = productRepository.findById(order.getProduct().getId())
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        order.setProduct(product);
+        return orderRepository.save(order);
     }
 
-    @GetMapping("/{orderId}")
-    public ResponseEntity<Order> getProductById(@PathVariable int orderId) {
-        return ResponseEntity.ok(orderService.getOrderById(orderId));
-    }
+    @PutMapping("/{id}")
+    public Order updateOrder(@PathVariable Long id, @RequestBody Order updatedOrder) {
+        Order existingOrder = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-    @PostMapping()
-    public ResponseEntity<Order> createOrder(@RequestBody OrderRequest orderRequest) {
-        return ResponseEntity.ok(orderService.createOrder(orderRequest));
+        // Validar restricciones
+        if (updatedOrder.getUnits() > existingOrder.getUnits() ||
+            updatedOrder.getBonus() > existingOrder.getBonus() ||
+            updatedOrder.getPromo() > existingOrder.getPromo()) {
+            throw new RuntimeException("No puedes agregar más unidades, bonos o promociones");
+        }
+
+        existingOrder.setUnits(updatedOrder.getUnits());
+        existingOrder.setBonus(updatedOrder.getBonus());
+        existingOrder.setPromo(updatedOrder.getPromo());
+
+        return orderRepository.save(existingOrder);
     }
 }

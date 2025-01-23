@@ -3,28 +3,24 @@ package com.cintest.orders.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
+    private Long id;
     private int units;
-
     private int bonus;
-
     private int promo;
+    
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
 
-    private int totalPrice;
-
-    public Order() {
-    }
-
-    public int getId() {
+    // Getters and setters
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -52,11 +48,16 @@ public class Order {
         this.promo = promo;
     }
 
-    public int getTotalPrice() {
-        return totalPrice;
+    public Product getProduct() {
+        return product;
     }
 
-    public void setTotalPrice(int totalPrice) {
-        this.totalPrice = totalPrice;
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    // Método para calcular el precio total
+    public int getTotalPrice() {
+        return product.getPrice() * (units + bonus + promo);
     }
 }
